@@ -100,8 +100,6 @@ int mydestroy() {
     return 0;
 }
 
-//Part 1 -- Succeeded
-
 void* myalloc(size_t size) {
     printf("Allocating memory of size %zu bytes\n", size);
 
@@ -229,4 +227,4 @@ void myfree(void *ptr) {
     statusno = 0;
 }
 
-//Part 2 -- Succeeded
+// Parts 1, 2, and 3 Succeeded
