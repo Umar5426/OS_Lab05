@@ -5,6 +5,8 @@
 
 #include "myalloc.h"
 
+#define MIN_PAYLOAD_SIZE 1
+
 // Global variables
 void *arena_start = NULL;
 void *arena_end = NULL;
@@ -126,14 +128,17 @@ void* myalloc(size_t size) {
         if (current->is_free && current->size >= size) {
             printf("...found suitable chunk\n");
 
-            // Determine if splitting is necessary
-            size_t total_size_needed = size + sizeof(node_t);
-            if (current->size >= total_size_needed) {
+            // Calculate the remaining size after allocation and new chunk header
+            size_t remaining_size = current->size - size - sizeof(node_t);
+
+            // Determine if splitting is necessary and possible
+            if (remaining_size >= MIN_PAYLOAD_SIZE) {
+                // Splitting is possible
                 printf("...splitting chunk\n");
 
-                // Create new chunk
+                // Create the new free chunk after the allocated chunk
                 node_t *new_chunk = (node_t *)((char *)current + sizeof(node_t) + size);
-                new_chunk->size = current->size - size - sizeof(node_t);
+                new_chunk->size = remaining_size;
                 new_chunk->is_free = 1;
                 new_chunk->fwd = current->fwd;
                 new_chunk->bwd = current;
@@ -142,29 +147,35 @@ void* myalloc(size_t size) {
                     current->fwd->bwd = new_chunk;
                 }
 
+                // Update the allocated chunk
                 current->size = size;
                 current->is_free = 0;
                 current->fwd = new_chunk;
 
                 printf("...chunk split into allocated chunk of size %zu and free chunk of size %zu\n", current->size, new_chunk->size);
             } else {
+                // Not enough space to split; allocate the entire chunk
                 printf("...allocating entire chunk without splitting\n");
                 current->is_free = 0;
             }
 
+            // Return a pointer to the allocated memory (after the header)
             void *allocated_memory = (void *)((char *)current + sizeof(node_t));
             printf("...allocation successful, memory starts at %p\n", allocated_memory);
             statusno = 0;
             return allocated_memory;
         }
 
+        // Move to the next chunk
         current = current->fwd;
     }
 
+    // No suitable chunk found
     printf("...no suitable free chunk found\n");
     statusno = ERR_OUT_OF_MEMORY;
     return NULL;
 }
+
 
 void myfree(void *ptr) {
     printf("Freeing allocated memory:\n");
