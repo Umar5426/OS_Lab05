@@ -88,3 +88,5 @@ int mydestroy() {
     statusno = 0;
     return 0;
 }
+
+//Part 1 -- Succeeded
